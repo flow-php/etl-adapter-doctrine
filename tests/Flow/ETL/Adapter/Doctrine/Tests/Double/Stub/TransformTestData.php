@@ -16,7 +16,8 @@ final class TransformTestData implements Transformer
             fn (Row $row) : Row => Row::create(
                 new Row\Entry\IntegerEntry('id', $row->valueOf('row')['id']),
                 new Row\Entry\StringEntry('name', $row->valueOf('row')['name']),
-                new Row\Entry\StringEntry('description', $row->valueOf('row')['description'])
+                new Row\Entry\StringEntry('description', $row->valueOf('row')['description']),
+                new Row\Entry\BooleanEntry('active', $row->valueOf('row')['active'])
             )
         );
     }

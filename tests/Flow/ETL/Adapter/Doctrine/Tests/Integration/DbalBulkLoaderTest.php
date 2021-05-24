@@ -18,14 +18,14 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 
         ETL::extract(
             new ArrayExtractor(
-                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
-                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two'],
-                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three'],
+                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One', 'active' => true],
+                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three', 'active' => false],
             )
         )->transform(
             new TransformTestData()
         )->load(
-            DbalBulkLoader::insert($this->pgsqlDatabaseContext->connection(), $bulkSize = 10, $table)
+            DbalBulkLoader::insertOrUpdateOnConstraintConflict($this->pgsqlDatabaseContext->connection(), $bulkSize = 10, $table, 'flow_dbal_loader_test_pkey')
         )->run();
 
         $this->assertEquals(3, $this->pgsqlDatabaseContext->tableCount($table));
@@ -38,9 +38,9 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 
         ETL::extract(
             new ArrayExtractor(
-                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
-                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two'],
-                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three'],
+                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One', 'active' => true],
+                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three', 'active' => true],
             )
         )->transform(
             new TransformTestData()
@@ -57,9 +57,9 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
         $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_loader_test');
         ETL::extract(
             new ArrayExtractor(
-                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
-                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two'],
-                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three'],
+                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One', 'active' => true],
+                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three', 'active' => true],
             )
         )->transform(
             new TransformTestData()
@@ -69,9 +69,9 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 
         ETL::extract(
             new ArrayExtractor(
-                ['id' => 2, 'name' => 'New Name Two', 'description' => 'New Description Two'],
-                ['id' => 3, 'name' => 'New Name Three', 'description' => 'New Description Three'],
-                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three'],
+                ['id' => 2, 'name' => 'New Name Two', 'description' => 'New Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'New Name Three', 'description' => 'New Description Three', 'active' => true],
+                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three', 'active' => true],
             )
         )->transform(
             new TransformTestData()
@@ -83,10 +83,10 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
         $this->assertEquals(2, $this->pgsqlDatabaseContext->numberOfExecutedInsertQueries());
         $this->assertEquals(
             [
-                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
-                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two'],
-                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three'],
-                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three'],
+                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One', 'active' => true],
+                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three', 'active' => true],
+                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three', 'active' => true],
             ],
             $this->pgsqlDatabaseContext->selectAll($table)
         );
@@ -97,9 +97,9 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
         $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_loader_test');
         ETL::extract(
             new ArrayExtractor(
-                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
-                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two'],
-                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three'],
+                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One', 'active' => true],
+                ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three', 'active' => true],
             )
         )->transform(
             new TransformTestData()
@@ -109,9 +109,9 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 
         ETL::extract(
             new ArrayExtractor(
-                ['id' => 2, 'name' => 'New Name Two', 'description' => 'New Description Two'],
-                ['id' => 3, 'name' => 'New Name Three', 'description' => 'New Description Three'],
-                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three'],
+                ['id' => 2, 'name' => 'New Name Two', 'description' => 'New Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'New Name Three', 'description' => 'New Description Three', 'active' => true],
+                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three', 'active' => true],
             )
         )->transform(
             new TransformTestData()
@@ -128,10 +128,10 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
         $this->assertEquals(2, $this->pgsqlDatabaseContext->numberOfExecutedInsertQueries());
         $this->assertEquals(
             [
-                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
-                ['id' => 2, 'name' => 'New Name Two', 'description' => 'New Description Two'],
-                ['id' => 3, 'name' => 'New Name Three', 'description' => 'New Description Three'],
-                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three'],
+                ['id' => 1, 'name' => 'Name One', 'description' => 'Description One', 'active' => true],
+                ['id' => 2, 'name' => 'New Name Two', 'description' => 'New Description Two', 'active' => true],
+                ['id' => 3, 'name' => 'New Name Three', 'description' => 'New Description Three', 'active' => true],
+                ['id' => 4, 'name' => 'New Name Four', 'description' => 'New Description Three', 'active' => true],
             ],
             $this->pgsqlDatabaseContext->selectAll($table)
         );

@@ -35,7 +35,7 @@ final class DatabaseContext
     public function createTestTable(string $tableName) : void
     {
         $this->connection->executeQuery("DROP TABLE IF EXISTS {$tableName}");
-        $this->connection->executeQuery("CREATE TABLE {$tableName} (id INT NOT NULL, name VARCHAR(255) NOT NULL, description VARCHAR(255) NOT NULL, PRIMARY KEY(id))");
+        $this->connection->executeQuery("CREATE TABLE {$tableName} (id INT NOT NULL, name VARCHAR(255) NOT NULL, description VARCHAR(255) NOT NULL, active BOOL NOT NULL, PRIMARY KEY(id))");
 
         $this->createdTables[] = $tableName;
     }
