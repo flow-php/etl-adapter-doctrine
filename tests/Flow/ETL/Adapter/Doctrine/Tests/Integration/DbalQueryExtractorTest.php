@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Flow\ETL\Adapter\Doctrine\Tests\Integration;
 
+use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Flow\ETL\Adapter\Doctrine\DbalBulkLoader;
 use Flow\ETL\Adapter\Doctrine\DbalQueryExtractor;
 use Flow\ETL\Adapter\Doctrine\ParametersSet;
@@ -16,7 +20,15 @@ final class DbalQueryExtractorTest extends IntegrationTestCase
 {
     public function test_extracting_multiple_rows_at_once() : void
     {
-        $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_extractor_test');
+        $this->pgsqlDatabaseContext->createTable((new Table(
+            $table = 'flow_doctrine_bulk_test',
+            [
+                new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+            ],
+        ))
+            ->setPrimaryKey(['id']));
 
         ETL::extract(
             new ArrayExtractor(
@@ -49,7 +61,15 @@ final class DbalQueryExtractorTest extends IntegrationTestCase
 
     public function test_extracting_multiple_rows_multiple_times() : void
     {
-        $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_extractor_test');
+        $this->pgsqlDatabaseContext->createTable((new Table(
+            $table = 'flow_doctrine_bulk_test',
+            [
+                new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+            ],
+        ))
+            ->setPrimaryKey(['id']));
 
         ETL::extract(
             new ArrayExtractor(

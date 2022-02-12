@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Flow\ETL\Adapter\Doctrine\Tests\Integration;
 
+use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Flow\ETL\Adapter\Doctrine\DbalBulkLoader;
 use Flow\ETL\Adapter\Doctrine\Tests\Double\Stub\ArrayExtractor;
 use Flow\ETL\Adapter\Doctrine\Tests\Double\Stub\TransformTestData;
@@ -14,7 +18,17 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 {
     public function test_inserts_multiple_rows_at_once() : void
     {
-        $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_loader_test');
+        $this->pgsqlDatabaseContext->createTable(
+            (new Table(
+                $table = 'flow_doctrine_bulk_test',
+                [
+                    new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                    new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                    new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                ],
+            ))
+                ->setPrimaryKey(['id'])
+        );
 
         $loader = DbalBulkLoader::insert($this->pgsqlDatabaseContext->connection(), $bulkSize = 10, $table);
 
@@ -35,7 +49,17 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 
     public function test_inserts_multiple_rows_in_two_insert_queries() : void
     {
-        $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_loader_test');
+        $this->pgsqlDatabaseContext->createTable(
+            (new Table(
+                $table = 'flow_doctrine_bulk_test',
+                [
+                    new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                    new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                    new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                ],
+            ))
+                ->setPrimaryKey(['id'])
+        );
 
         ETL::extract(
             new ArrayExtractor(
@@ -55,7 +79,17 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 
     public function test_inserts_new_rows_and_skip_already_existed() : void
     {
-        $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_loader_test');
+        $this->pgsqlDatabaseContext->createTable(
+            (new Table(
+                $table = 'flow_doctrine_bulk_test',
+                [
+                    new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                    new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                    new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                ],
+            ))
+                ->setPrimaryKey(['id'])
+        );
         ETL::extract(
             new ArrayExtractor(
                 ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
@@ -95,7 +129,18 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
 
     public function test_inserts_new_rows_or_updates_already_existed_based_on_primary_key() : void
     {
-        $this->pgsqlDatabaseContext->createTestTable($table = 'flow_dbal_loader_test');
+        $this->pgsqlDatabaseContext->createTable(
+            (new Table(
+                $table = 'flow_doctrine_bulk_test',
+                [
+                    new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                    new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                    new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                ],
+            ))
+            ->setPrimaryKey(['id'], 'flow_dbal_loader_test_pkey')
+            ->addUniqueConstraint(['id'], 'flow_dbal_loader_test_pkey')
+        );
         ETL::extract(
             new ArrayExtractor(
                 ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
