@@ -186,16 +186,16 @@ final class DbalLoaderTest extends IntegrationTestCase
     {
         $this->pgsqlDatabaseContext->createTable(
             (new Table(
-            $table = 'flow_doctrine_bulk_test',
-            [
-                new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
-                new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
-                new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
-            ],
-        ))
+                    $table = 'flow_doctrine_bulk_test',
+                    [
+                        new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                        new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                        new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                    ],
+                ))
             ->setPrimaryKey(['id'])
-            ->addUniqueConstraint(['id'], 'flow_dbal_loader_test_pkey')
         );
+
         ETL::extract(
             new ArrayExtractor(
                 ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
@@ -217,7 +217,7 @@ final class DbalLoaderTest extends IntegrationTestCase
         )->transform(
             new TransformTestData()
         )->load(
-            new DbalLoader($table, $bulkSize = 10, $this->connectionParams(), ['constraint' => 'flow_dbal_loader_test_pkey'])
+            new DbalLoader($table, $bulkSize = 10, $this->connectionParams(), ['constraint' => 'flow_doctrine_bulk_test_pkey'])
         )->run();
 
         $this->assertEquals(4, $this->pgsqlDatabaseContext->tableCount($table));

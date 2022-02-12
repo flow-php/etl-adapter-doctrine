@@ -133,14 +133,14 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
             (new Table(
                 $table = 'flow_doctrine_bulk_test',
                 [
-                    new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                    new Column('id', Type::getType(Types::INTEGER), ['notnull' => true, 'customSchemaOptions' => ['unique' => true]]),
                     new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
                     new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
                 ],
             ))
-            ->setPrimaryKey(['id'], 'flow_dbal_loader_test_pkey')
-            ->addUniqueConstraint(['id'], 'flow_dbal_loader_test_pkey')
+            ->setPrimaryKey(['id'])
         );
+
         ETL::extract(
             new ArrayExtractor(
                 ['id' => 1, 'name' => 'Name One', 'description' => 'Description One'],
@@ -166,7 +166,7 @@ final class DbalBulkLoaderTest extends IntegrationTestCase
                 $this->pgsqlDatabaseContext->connection(),
                 $bulkSize = 10,
                 $table,
-                'flow_dbal_loader_test_pkey'
+                'flow_doctrine_bulk_test_pkey'
             )
         )->run();
 
