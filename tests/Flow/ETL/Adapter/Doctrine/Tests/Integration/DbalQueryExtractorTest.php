@@ -11,8 +11,6 @@ use Flow\ETL\Adapter\Doctrine\Tests\Double\Stub\ArrayExtractor;
 use Flow\ETL\Adapter\Doctrine\Tests\Double\Stub\TransformTestData;
 use Flow\ETL\Adapter\Doctrine\Tests\IntegrationTestCase;
 use Flow\ETL\ETL;
-use Flow\ETL\Loader;
-use Flow\ETL\Rows;
 
 final class DbalQueryExtractorTest extends IntegrationTestCase
 {
@@ -32,21 +30,12 @@ final class DbalQueryExtractorTest extends IntegrationTestCase
             DbalBulkLoader::insert($this->pgsqlDatabaseContext->connection(), $bulkSize = 10, $table)
         )->run();
 
-        ETL::extract(
+        $rows = ETL::extract(
             DbalQueryExtractor::single(
                 $this->pgsqlDatabaseContext->connection(),
                 "SELECT * FROM {$table} ORDER BY id"
             )
-        )->load(
-            $loader = new class implements Loader {
-                public array $data = [];
-
-                public function load(Rows $rows) : void
-                {
-                    $this->data = $rows->toArray();
-                }
-            }
-        )->run();
+        )->fetch();
 
         $this->assertSame(
             [
@@ -54,7 +43,7 @@ final class DbalQueryExtractorTest extends IntegrationTestCase
                 ['row' => ['id' => 2, 'name' => 'Name Two', 'description' => 'Description Two']],
                 ['row' => ['id' => 3, 'name' => 'Name Three', 'description' => 'Description Three']],
             ],
-            $loader->data
+            $rows->toArray()
         );
     }
 
@@ -81,7 +70,7 @@ final class DbalQueryExtractorTest extends IntegrationTestCase
             DbalBulkLoader::insert($this->pgsqlDatabaseContext->connection(), $bulkSize = 10, $table)
         )->run();
 
-        ETL::extract(
+        $rows = ETL::extract(
             new DbalQueryExtractor(
                 $this->pgsqlDatabaseContext->connection(),
                 "SELECT * FROM {$table} ORDER BY id LIMIT :limit OFFSET :offset",
@@ -93,21 +82,9 @@ final class DbalQueryExtractorTest extends IntegrationTestCase
                     ['limit' => 2, 'offset' => 8],
                 )
             )
-        )->load(
-            $loader = new class implements Loader {
-                public array $data = [];
+        )->fetch();
 
-                public int $loads = 0;
-
-                public function load(Rows $rows) : void
-                {
-                    $this->loads += 1;
-                    $this->data = \array_merge($this->data, $rows->toArray());
-                }
-            }
-        )->run();
-
-        $this->assertSame(5, $loader->loads);
+        $this->assertSame(10, $rows->count());
         $this->assertSame(
             [
                 ['row' => ['id' => 1, 'name' => 'Name', 'description' => 'Description']],
@@ -121,7 +98,7 @@ final class DbalQueryExtractorTest extends IntegrationTestCase
                 ['row' => ['id' => 9, 'name' => 'Name', 'description' => 'Description']],
                 ['row' => ['id' => 10, 'name' => 'Name', 'description' => 'Description']],
             ],
-            $loader->data
+            $rows->toArray()
         );
     }
 }
