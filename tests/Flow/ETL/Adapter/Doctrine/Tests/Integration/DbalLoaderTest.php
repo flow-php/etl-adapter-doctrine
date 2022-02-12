@@ -186,13 +186,13 @@ final class DbalLoaderTest extends IntegrationTestCase
     {
         $this->pgsqlDatabaseContext->createTable(
             (new Table(
-                    $table = 'flow_doctrine_bulk_test',
-                    [
-                        new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
-                        new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
-                        new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
-                    ],
-                ))
+                $table = 'flow_doctrine_bulk_test',
+                [
+                    new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                    new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                    new Column('description', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                ],
+            ))
             ->setPrimaryKey(['id'])
         );
 

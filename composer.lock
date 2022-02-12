@@ -504,12 +504,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/flow-php/doctrine-dbal-bulk.git",
-                "reference": "ae55796f0e046d47dc1ac113271aa55da7ab4bb4"
+                "reference": "d27c2fde16dc6ef67fcd4ec51e5fc67e827881c4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/flow-php/doctrine-dbal-bulk/zipball/ae55796f0e046d47dc1ac113271aa55da7ab4bb4",
-                "reference": "ae55796f0e046d47dc1ac113271aa55da7ab4bb4",
+                "url": "https://api.github.com/repos/flow-php/doctrine-dbal-bulk/zipball/d27c2fde16dc6ef67fcd4ec51e5fc67e827881c4",
+                "reference": "d27c2fde16dc6ef67fcd4ec51e5fc67e827881c4",
                 "shasum": ""
             },
             "require": {
@@ -541,7 +541,7 @@
                 "issues": "https://github.com/flow-php/doctrine-dbal-bulk/issues",
                 "source": "https://github.com/flow-php/doctrine-dbal-bulk/tree/1.x"
             },
-            "time": "2022-02-12T20:54:10+00:00"
+            "time": "2022-02-12T20:55:04+00:00"
         }
     ],
     "aliases": [],
