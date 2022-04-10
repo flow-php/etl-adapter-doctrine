@@ -6,6 +6,7 @@
         xsi:schemaLocation="https://getpsalm.org/schema/config tools/vendor/vimeo/psalm/config.xsd"
         cacheDirectory="var/psalm/cache"
         phpVersion="8.1"
+        errorLevel="1"
 >
     <projectFiles>
         <directory name="src"/>
