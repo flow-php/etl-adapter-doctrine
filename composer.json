@@ -2,7 +2,7 @@
     "name": "flow-php/etl-adapter-doctrine",
     "type": "library",
     "license": "MIT",
-    "description": "ETL adapter for bulk operations using Doctrine DBAL Bulk",
+    "description": "PHP ETL - Adapter - Doctrine Dbal",
     "keywords": ["doctrine", "dbal", "bulk", "insert", "upsert", "etl", "loader"],
     "minimum-stability": "dev",
     "require": {
@@ -13,7 +13,7 @@
         "flow-php/doctrine-dbal-bulk": "^1.0@dev"
     },
     "suggest": {
-        "flow-php/doctrine-dbal-bulk" : "Allows DbalBulkLoader to insert data in bulks into database"
+        "flow-php/doctrine-dbal-bulk" : "Read/Write data int bulks from Databases"
     },
     "autoload": {
         "psr-4": {
