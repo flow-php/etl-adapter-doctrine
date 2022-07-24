@@ -31,6 +31,7 @@
 - [2844ae](https://github.com/flow-php/etl-adapter-doctrine/commit/2844ae25cc3f17848a3759c9e86cc06086a952ea) - **dependncies** - [@norberttech](https://github.com/norberttech)
 
 ### Removed
+- [9aec49](https://github.com/flow-php/etl-adapter-doctrine/commit/9aec49bccfdaa15fb8c407587944290dd71504f1) - **failing test in dbal platform** - [@norberttech](https://github.com/norberttech)
 - [#104](https://github.com/flow-php/etl-adapter-doctrine/pull/104) - **Removed hard doctrine dbal dependency that comes anyway with flow-php/doctrine-dbal-bulk** - [@norberttech](https://github.com/norberttech)
 - [#102](https://github.com/flow-php/etl-adapter-doctrine/pull/102) - **Deprecated classes** - [@norberttech](https://github.com/norberttech)
 
