@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Flow\ETL\Adapter\Doctrine\Tests;
 
+use Doctrine\DBAL\{Configuration, DriverManager};
 use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\DBAL\Tools\DsnParser;
-use Doctrine\DBAL\{Configuration, DriverManager};
 use Flow\ETL\Adapter\Doctrine\Tests\Context\{DatabaseContext, InsertQueryCounter, SelectQueryCounter};
 use Flow\ETL\Tests\FlowTestCase;
 

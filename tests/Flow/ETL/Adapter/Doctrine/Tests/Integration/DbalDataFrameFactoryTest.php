@@ -18,8 +18,8 @@ use function Flow\ETL\DSL\{int_entry,
     type_string};
 use Doctrine\DBAL\Schema\{Column, Table};
 use Doctrine\DBAL\Types\{Type, Types};
-use Flow\ETL\Adapter\Doctrine\Tests\IntegrationTestCase;
 use Flow\ETL\Adapter\Doctrine\{LiteralParameter, Parameter};
+use Flow\ETL\Adapter\Doctrine\Tests\IntegrationTestCase;
 
 final class DbalDataFrameFactoryTest extends IntegrationTestCase
 {

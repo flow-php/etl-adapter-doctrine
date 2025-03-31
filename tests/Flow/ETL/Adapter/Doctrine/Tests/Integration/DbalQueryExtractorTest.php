@@ -9,8 +9,8 @@ use function Flow\ETL\DSL\data_frame;
 use function Flow\ETL\DSL\{df, from_array, int_schema, map_schema, schema, str_schema, type_int, type_map, type_string};
 use Doctrine\DBAL\Schema\{Column, Table};
 use Doctrine\DBAL\Types\{Type, Types};
-use Flow\ETL\Adapter\Doctrine\Tests\IntegrationTestCase;
 use Flow\ETL\Adapter\Doctrine\{DbalLoader, ParametersSet};
+use Flow\ETL\Adapter\Doctrine\Tests\IntegrationTestCase;
 
 final class DbalQueryExtractorTest extends IntegrationTestCase
 {

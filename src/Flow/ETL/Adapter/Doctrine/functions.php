@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Flow\ETL\Adapter\Doctrine;
 
+use Doctrine\DBAL\{ArrayParameterType as DbalArrayType, Connection, ParameterType as DbalParameterType};
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Types\Type as DbalType;
-use Doctrine\DBAL\{ArrayParameterType as DbalArrayType, Connection, ParameterType as DbalParameterType};
 use Flow\Doctrine\Bulk\{Dialect\MySQLInsertOptions,
     Dialect\PostgreSQLInsertOptions,
     Dialect\PostgreSQLUpdateOptions,
     Dialect\SqliteInsertOptions,
     InsertOptions,
     UpdateOptions};
-use Flow\ETL\Exception\InvalidArgumentException;
 use Flow\ETL\{Attribute\DocumentationDSL,
     Attribute\DocumentationExample,
     Attribute\Module,
     Attribute\Type as DSLType,
     Row\Schema};
+use Flow\ETL\Exception\InvalidArgumentException;
 
 /**
  * @param array<string, mixed>|Connection $connection
