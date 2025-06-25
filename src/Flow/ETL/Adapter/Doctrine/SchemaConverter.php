@@ -53,6 +53,9 @@ final readonly class SchemaConverter
         $this->typesMap = new TypesMap($map);
     }
 
+    /**
+     * @param array<array-key, mixed> $tableOptions
+     */
     public function toDbalTable(Schema $schema, string $tableName, array $tableOptions = []) : Table
     {
         $columns = [];
@@ -79,6 +82,9 @@ final readonly class SchemaConverter
         return new Schema(...$definitions);
     }
 
+    /**
+     * @return Definition<mixed>
+     */
     private function columnToFlow(Column $column, Table $table) : Definition
     {
         $type = $this->typesMap->toFlowType($column->getType()::class);
@@ -92,7 +98,11 @@ final readonly class SchemaConverter
         }
 
         if ($column->getDefault() !== null) {
-            $metadata = $metadata->merge(DbalMetadata::default($column->getDefault()));
+            $defaultValue = $column->getDefault();
+
+            if (\is_scalar($defaultValue)) {
+                $metadata = $metadata->merge(DbalMetadata::default($defaultValue));
+            }
         }
 
         if ($column->getPrecision() !== null) {
@@ -216,6 +226,9 @@ final readonly class SchemaConverter
         return new Column($name, $dbalType, $options);
     }
 
+    /**
+     * @return array<Index>
+     */
     private function updateIndexes(Schema $schema, Table $table) : array
     {
         $indexesData = [];

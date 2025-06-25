@@ -12,6 +12,9 @@ final class SelectQueryCounter extends AbstractLogger implements LoggerAwareInte
 
     public int $count = 0;
 
+    /**
+     * @var array<string>
+     */
     public array $queries = [];
 
     public function __construct()
@@ -25,9 +28,15 @@ final class SelectQueryCounter extends AbstractLogger implements LoggerAwareInte
             return;
         }
 
-        if (\str_starts_with(\trim((string) $context['sql']), 'SELECT')) {
-            $this->count++;
-            $this->queries[] = $context['sql'];
+        $sql = $context['sql'];
+
+        if (\is_string($sql) || $sql instanceof \Stringable) {
+            $sqlString = (string) $sql;
+
+            if (\str_starts_with(\trim($sqlString), 'SELECT')) {
+                $this->count++;
+                $this->queries[] = $sqlString;
+            }
         }
     }
 
