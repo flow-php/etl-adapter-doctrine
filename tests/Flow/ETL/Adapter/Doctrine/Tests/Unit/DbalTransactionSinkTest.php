@@ -10,18 +10,20 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\TransactionIsolationLevel;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
+use Flow\ETL\Adapter\Doctrine\DbalTransaction;
+use Flow\ETL\Adapter\Doctrine\Tests\Context\CommitCounter;
 use Flow\ETL\Adapter\Doctrine\Tests\Context\DatabaseContext;
 use Flow\ETL\Adapter\Doctrine\Tests\Context\InsertQueryCounter;
 use Flow\ETL\Adapter\Doctrine\Tests\Context\SelectQueryCounter;
 use Flow\ETL\Adapter\Doctrine\Tests\Double\TransactionSpyLoader;
 use Flow\ETL\DataFrame;
+use Flow\ETL\Sink\Transactional;
 use Flow\ETL\Tests\Double\CallbackTransformation;
 use Flow\ETL\Tests\Double\ClosureThrowingLoader;
 use Flow\ETL\Tests\Double\LoadThenThrowLoader;
 use Flow\ETL\Tests\FlowTestCase;
 use RuntimeException;
 
-use function array_column;
 use function Flow\ETL\Adapter\Doctrine\to_dbal_table_insert;
 use function Flow\ETL\Adapter\Doctrine\to_dbal_transaction;
 use function Flow\ETL\DSL\df;
@@ -32,12 +34,17 @@ use function Flow\ETL\DSL\ref;
 use function Flow\ETL\DSL\to_branch;
 use function Flow\ETL\DSL\to_transformation;
 
-final class TransactionalDbalLoaderTransformationTest extends FlowTestCase
+final class DbalTransactionSinkTest extends FlowTestCase
 {
-    public function test_a_drain_failure_suppressed_by_the_error_handler_commits_the_rows_delivered_before_the_failure(): void
+    public function test_a_drain_failure_suppressed_by_the_error_handler_rolls_back_the_delivery_and_surfaces_the_failure(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $databaseContext = new DatabaseContext($connection, new InsertQueryCounter(), new SelectQueryCounter());
+        $databaseContext = new DatabaseContext(
+            $connection,
+            new InsertQueryCounter(),
+            new SelectQueryCounter(),
+            new CommitCounter(),
+        );
         $databaseContext->createTable(new Table('tx_drain', [new Column('id', Type::getType(Types::INTEGER), [
             'notnull' => true,
         ])]));
@@ -47,25 +54,37 @@ final class TransactionalDbalLoaderTransformationTest extends FlowTestCase
             new RuntimeException('sink failed'),
         );
 
-        df()
-            ->read(from_array([['id' => 3], ['id' => 1], ['id' => 4], ['id' => 2]]))
-            ->onError(ignore_error_handler())
-            ->batchSize(2)
-            ->write(to_dbal_transaction($connection, to_transformation(
-                new CallbackTransformation(static fn(DataFrame $df): DataFrame => $df->sortBy([ref('id')])),
-                $sink,
-            )))
-            ->run();
+        // a drain failure is never offered to the handler: the drain rolls back and the user's exception surfaces
+        try {
+            df()
+                ->read(from_array([['id' => 3], ['id' => 1], ['id' => 4], ['id' => 2]]))
+                ->onError(ignore_error_handler())
+                ->batchSize(2)
+                ->write(to_dbal_transaction($connection, to_transformation(
+                    new CallbackTransformation(static fn(DataFrame $df): DataFrame => $df->sortBy([ref('id')])),
+                    $sink,
+                )))
+                ->run();
+
+            static::fail('Expected the drain failure to surface');
+        } catch (RuntimeException $e) {
+            static::assertSame('sink failed', $e->getMessage());
+        }
 
         static::assertSame(1, $sink->loadsCount);
-        static::assertSame([1, 2, 3, 4], array_column($databaseContext->selectAll('tx_drain'), 'id'));
+        static::assertSame([], $databaseContext->selectAll('tx_drain'));
         static::assertFalse($connection->isTransactionActive());
     }
 
     public function test_a_failure_during_the_closure_transaction_rolls_back_the_drained_delivery(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $databaseContext = new DatabaseContext($connection, new InsertQueryCounter(), new SelectQueryCounter());
+        $databaseContext = new DatabaseContext(
+            $connection,
+            new InsertQueryCounter(),
+            new SelectQueryCounter(),
+            new CommitCounter(),
+        );
         $databaseContext->createTable(new Table('tx_drain', [new Column('id', Type::getType(Types::INTEGER), [
             'notnull' => true,
         ])]));
@@ -145,10 +164,17 @@ final class TransactionalDbalLoaderTransformationTest extends FlowTestCase
         df()
             ->read(from_array([['id' => 3], ['id' => 1], ['id' => 4], ['id' => 2]]))
             ->batchSize(2)
-            ->write(to_dbal_transaction($connection, to_transformation(
-                new CallbackTransformation(static fn(DataFrame $df): DataFrame => $df->sortBy([ref('id')])),
-                $spy,
-            ))->withIsolationLevel(TransactionIsolationLevel::SERIALIZABLE))
+            ->write(
+                new Transactional(
+                    DbalTransaction::fromConnection(
+                        $connection,
+                    )->withIsolationLevel(TransactionIsolationLevel::SERIALIZABLE),
+                    to_transformation(
+                        new CallbackTransformation(static fn(DataFrame $df): DataFrame => $df->sortBy([ref('id')])),
+                        $spy,
+                    ),
+                ),
+            )
             ->run();
 
         static::assertSame([['rows' => 4, 'inTransaction' => true]], $spy->deliveries);

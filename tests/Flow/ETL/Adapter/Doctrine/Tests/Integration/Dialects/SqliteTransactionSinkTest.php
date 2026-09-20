@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Flow\ETL\Adapter\Doctrine\Tests\Integration\Dialects;
 
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Table;
@@ -11,13 +12,15 @@ use Doctrine\DBAL\TransactionIsolationLevel;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Exception;
+use Flow\ETL\Adapter\Doctrine\DbalTransaction;
 use Flow\ETL\Adapter\Doctrine\Tests\IntegrationTestCase;
+use Flow\ETL\Sink\Transactional;
 
 use function Flow\ETL\Adapter\Doctrine\to_dbal_table_delete;
 use function Flow\ETL\Adapter\Doctrine\to_dbal_table_insert;
 use function Flow\ETL\Adapter\Doctrine\to_dbal_transaction;
-use function Flow\ETL\DSL\config;
-use function Flow\ETL\DSL\flow_context;
+use function Flow\ETL\DSL\df;
+use function Flow\ETL\DSL\from_rows;
 use function Flow\ETL\DSL\integer_schema;
 use function Flow\ETL\DSL\row;
 use function Flow\ETL\DSL\rows;
@@ -25,7 +28,7 @@ use function Flow\ETL\DSL\schema;
 use function Flow\ETL\DSL\string_schema;
 use function getenv;
 
-final class SqliteTransactionalDbalLoaderTest extends IntegrationTestCase
+final class SqliteTransactionSinkTest extends IntegrationTestCase
 {
     public function test_multiple_batches_in_separate_transactions(): void
     {
@@ -43,15 +46,16 @@ final class SqliteTransactionalDbalLoaderTest extends IntegrationTestCase
 
         $connection = $this->sqliteDatabaseContext->connection();
 
-        $loader = to_dbal_transaction($connection, to_dbal_table_insert($connection, 'test_table'));
+        df()
+            ->read(from_rows(
+                rows(schema(integer_schema('id'), integer_schema('value')), row(['id' => 1, 'value' => 100])),
+                rows(schema(integer_schema('id'), integer_schema('value')), row(['id' => 2, 'value' => 200])),
+            ))
+            ->write(to_dbal_transaction($connection, to_dbal_table_insert($connection, 'test_table')))
+            ->run();
 
-        $batch1 = rows(schema(integer_schema('id'), integer_schema('value')), row(['id' => 1, 'value' => 100]));
-        $batch2 = rows(schema(integer_schema('id'), integer_schema('value')), row(['id' => 2, 'value' => 200]));
-
-        $context = flow_context(config());
-
-        $loader->load($batch1, $context);
-        $loader->load($batch2, $context);
+        // one commit per batch, one for the drain
+        static::assertSame(3, $this->sqliteDatabaseContext->numberOfCommits());
 
         $result = $this->sqliteDatabaseContext->selectAll('test_table');
 
@@ -80,18 +84,25 @@ final class SqliteTransactionalDbalLoaderTest extends IntegrationTestCase
 
         $connection = $this->sqliteDatabaseContext->connection();
 
-        $rows = rows(schema(integer_schema('id'), string_schema('name')), row(['id' => 1, 'name' => 'Should fail']));
-
-        $loader = to_dbal_transaction(
-            $connection,
-            to_dbal_table_delete($connection, 'test_table'),
-            to_dbal_table_insert($connection, 'test_table'),
-        );
+        $thrown = null;
 
         try {
-            $loader->load($rows, flow_context(config()));
-        } catch (Exception) {
+            df()
+                ->read(from_rows(rows(
+                    schema(integer_schema('id'), string_schema('name')),
+                    row(['id' => 1, 'name' => 'Should fail']),
+                )))
+                ->write(to_dbal_transaction(
+                    $connection,
+                    to_dbal_table_delete($connection, 'test_table'),
+                    to_dbal_table_insert($connection, 'test_table'),
+                ))
+                ->run();
+        } catch (Exception $e) {
+            $thrown = $e;
         }
+
+        static::assertInstanceOf(UniqueConstraintViolationException::class, $thrown);
 
         $result = $this->sqliteDatabaseContext->selectAll('test_table');
 
@@ -118,19 +129,18 @@ final class SqliteTransactionalDbalLoaderTest extends IntegrationTestCase
 
         $connection = $this->sqliteDatabaseContext->connection();
 
-        $rows = rows(
-            schema(integer_schema('id'), string_schema('name')),
-            row(['id' => 1, 'name' => 'Updated']),
-            row(['id' => 2, 'name' => 'Updated']),
-        );
-
-        $loader = to_dbal_transaction(
-            $connection,
-            to_dbal_table_delete($connection, 'test_table'),
-            to_dbal_table_insert($connection, 'test_table'),
-        );
-
-        $loader->load($rows, flow_context(config()));
+        df()
+            ->read(from_rows(rows(
+                schema(integer_schema('id'), string_schema('name')),
+                row(['id' => 1, 'name' => 'Updated']),
+                row(['id' => 2, 'name' => 'Updated']),
+            )))
+            ->write(to_dbal_transaction(
+                $connection,
+                to_dbal_table_delete($connection, 'test_table'),
+                to_dbal_table_insert($connection, 'test_table'),
+            ))
+            ->run();
 
         $result = $this->sqliteDatabaseContext->selectAll('test_table');
 
@@ -157,14 +167,20 @@ final class SqliteTransactionalDbalLoaderTest extends IntegrationTestCase
 
         $connection = $this->sqliteDatabaseContext->connection();
 
-        $rows = rows(schema(integer_schema('id'), string_schema('name')), row(['id' => 1, 'name' => 'Test']));
-
-        $loader = to_dbal_transaction($connection, to_dbal_table_insert(
-            $connection,
-            'test_table',
-        ))->withIsolationLevel(TransactionIsolationLevel::SERIALIZABLE);
-
-        $loader->load($rows, flow_context(config()));
+        df()
+            ->read(from_rows(rows(
+                schema(integer_schema('id'), string_schema('name')),
+                row(['id' => 1, 'name' => 'Test']),
+            )))
+            ->write(
+                new Transactional(
+                    DbalTransaction::fromConnection(
+                        $connection,
+                    )->withIsolationLevel(TransactionIsolationLevel::SERIALIZABLE),
+                    to_dbal_table_insert($connection, 'test_table'),
+                ),
+            )
+            ->run();
 
         $result = $this->sqliteDatabaseContext->selectAll('test_table');
 
